@@ -1,1 +1,2 @@
 PyQt5==5.11.2
+QDarkStyle==2.5.4

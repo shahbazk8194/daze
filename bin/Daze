@@ -1,0 +1,14 @@
+#!/usr/local/bin/python3
+import os
+import sys
+
+# XXX temporary hack to be able to import flop
+BIN_DIR = os.path.dirname(os.path.realpath(__file__))
+DAZE_DIR = os.path.dirname(BIN_DIR)
+sys.path.insert(0, DAZE_DIR)
+from Daze.main_window import main
+
+
+if __name__ == "__main__":
+    main(sys.argv)
+
