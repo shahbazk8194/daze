@@ -5,6 +5,8 @@ import sys
 import qdarkstyle
 
 from .about_menu import AboutMenu
+from .utils import daze_state
+from .errors import DazeStateException
 from .playlist_tab import PlaylistTab
 from PyQt5.QtWidgets import (QMainWindow,
                              QApplication,
@@ -22,11 +24,27 @@ class MainWindow(QMainWindow):
         Setting up the main window
         @param app: QApplication instance
         '''
-        self.daze_data = {}
-        self.daze_data['Preferences'] = {}
-        self.app = app
         super().__init__()
+
+        self.app = app
+        try:
+            self.daze_data = daze_state.load_state()
+            self.load_daze()
+        except DazeStateException:
+            self.daze_data = {}
+            self.load_defaults()
+
         self.initUI()
+
+    def load_daze(self):
+        if self.daze_data.setdefault('Preferences', {})['mode'] == 'night':
+            self.app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
+        else:
+            self.app.setStyleSheet('')
+
+    def load_defaults(self):
+        self.daze_data.setdefault('Preferences', {}).setdefault('mode', 'night')
+        self.app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
 
     def initUI(self):
         '''
@@ -79,11 +97,13 @@ class MainWindow(QMainWindow):
         @param state: True if checkbox is checked, False otherwise
         '''
         if state:
-            self.daze_data['Preferences']['mode'] = 'night'
+            self.daze_data.setdefault('Preferences')['mode'] = 'night'
             self.app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
         else:
-            self.daze_data['Preferences']['mode'] = 'day'
+            self.daze_data.setdefault('Preferences')['mode'] = 'day'
             self.app.setStyleSheet('')
+
+        daze_state.save_state(self.daze_data)
 
     def quit_application(self):
         '''
@@ -114,12 +134,12 @@ class TabWidgets(QWidget):
         self.tabs.addTab(self.analytics_tab, "Analytics")
 
         self.layout.addWidget(self.tabs)
+
         self.setLayout(self.layout)
 
 
 def main(args):
     app = QApplication(args)
-    app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
     main_window = MainWindow(app)
     main_window.show()
     sys.exit(app.exec())

@@ -1,3 +1,3 @@
 '''
-Initialize the flop package
+Initialize the daze package
 '''
