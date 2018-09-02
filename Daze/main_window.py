@@ -1,5 +1,5 @@
 '''
-Responsible for main window creation
+Main window initialization
 '''
 import sys
 import qdarkstyle
@@ -8,6 +8,7 @@ from .about_menu import AboutMenu
 from .utils import daze_state
 from .errors import DazeStateException
 from .playlist_tab import PlaylistTab
+
 from PyQt5.QtWidgets import (QMainWindow,
                              QApplication,
                              QAction,
@@ -21,30 +22,68 @@ from PyQt5.QtWidgets import (QMainWindow,
 class MainWindow(QMainWindow):
     def __init__(self, app):
         '''
-        Setting up the main window
+        Main window set up
         @param app: QApplication instance
         '''
         super().__init__()
-
         self.app = app
+
+        self.menu_setup()
+
         try:
             self.daze_data = daze_state.load_state()
             self.load_daze()
         except DazeStateException:
             self.daze_data = {}
-            self.load_defaults()
+            self.set_defaults()
 
         self.initUI()
 
     def load_daze(self):
-        if self.daze_data.setdefault('Preferences', {})['mode'] == 'night':
+        '''
+        load daze data
+        '''
+        if self.daze_data.get('Preferences')['mode'] == 'night':
             self.app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
+            self.theme_action.setChecked(True)
         else:
             self.app.setStyleSheet('')
+            self.theme_action.setChecked(False)
 
-    def load_defaults(self):
+    def set_defaults(self):
+        '''
+        set daze data
+        '''
         self.daze_data.setdefault('Preferences', {}).setdefault('mode', 'night')
         self.app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
+
+    def menu_setup(self):
+        '''
+        Setup menu
+        '''
+        # menu
+        menu_bar = self.menuBar()
+        menu_bar.setNativeMenuBar(False)
+
+        file_menu = menu_bar.addMenu('File')
+        settings_menu = menu_bar.addMenu('Settings')
+
+        self.about_dialog = AboutMenu()
+        about_action = QAction('About Daze', self)
+        about_action.setShortcut('Ctrl+A')
+        about_action.triggered.connect(self.about_dialog.exec)
+
+        self.theme_action = QAction('Midnight Mode', self, checkable=True)
+        self.theme_action.setShortcut('Ctrl+P')
+        self.theme_action.triggered.connect(self.toggle_theme)
+
+        quit_action = QAction('Quit', self)
+        quit_action.setShortcut('Ctrl+Q')
+        quit_action.triggered.connect(self.quit_application)
+
+        file_menu.addAction(about_action)
+        file_menu.addAction(quit_action)
+        settings_menu.addAction(self.theme_action)
 
     def initUI(self):
         '''
@@ -62,31 +101,6 @@ class MainWindow(QMainWindow):
         qt_rectangle.moveCenter(center_point)
         self.move(qt_rectangle.topLeft())
 
-        # menu
-        menu_bar = self.menuBar()
-        menu_bar.setNativeMenuBar(False)
-
-        file_menu = menu_bar.addMenu('File')
-        settings_menu = menu_bar.addMenu('Settings')
-
-        self.about_dialog = AboutMenu()
-        about_action = QAction('About Daze', self)
-        about_action.setShortcut('Ctrl+A')
-        about_action.triggered.connect(self.about_dialog.exec)
-
-        theme_action = QAction('Midnight Mode', self, checkable=True)
-        theme_action.setChecked(True)
-        theme_action.setShortcut('Ctrl+P')
-        theme_action.triggered.connect(self.toggle_theme)
-
-        quit_action = QAction('Quit', self)
-        quit_action.setShortcut('Ctrl+Q')
-        quit_action.triggered.connect(self.quit_application)
-
-        file_menu.addAction(about_action)
-        file_menu.addAction(quit_action)
-        settings_menu.addAction(theme_action)
-
         # tabs
         self.tab_widgets = TabWidgets(self)
         self.setCentralWidget(self.tab_widgets)
@@ -97,11 +111,13 @@ class MainWindow(QMainWindow):
         @param state: True if checkbox is checked, False otherwise
         '''
         if state:
-            self.daze_data.setdefault('Preferences')['mode'] = 'night'
+            self.daze_data.get('Preferences')['mode'] = 'night'
             self.app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
+            self.theme_action.setChecked(True)
         else:
-            self.daze_data.setdefault('Preferences')['mode'] = 'day'
+            self.daze_data.get('Preferences')['mode'] = 'day'
             self.app.setStyleSheet('')
+            self.theme_action.setChecked(False)
 
         daze_state.save_state(self.daze_data)
 
@@ -115,7 +131,8 @@ class MainWindow(QMainWindow):
 class TabWidgets(QWidget):
     def __init__(self, parent):
         '''
-        Initialize our tabs
+        Initialize tabs
+
         @param parent: MainWindow instance
         '''
         super().__init__(parent)
@@ -134,7 +151,6 @@ class TabWidgets(QWidget):
         self.tabs.addTab(self.analytics_tab, "Analytics")
 
         self.layout.addWidget(self.tabs)
-
         self.setLayout(self.layout)
 
 

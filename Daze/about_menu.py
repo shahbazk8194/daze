@@ -1,10 +1,11 @@
 '''
-Reponsible for about dialog creation
+About dialog initialization
 '''
 from datetime import datetime
 import os
 
 from .constants import NAME, VERSION
+
 from PyQt5.QtGui import QFont, QPixmap
 from PyQt5.QtWidgets import (QDialog,
                              QLabel,

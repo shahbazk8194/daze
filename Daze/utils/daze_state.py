@@ -1,9 +1,10 @@
 '''
-Responsible for loading and saving daze state
+The loading and saving of daze state
 '''
-from ..errors import DazeStateException
 import os
 import pickle
+
+from ..errors import DazeStateException
 
 
 DAZE_STORAGE = '~/.daze_data.pkl'

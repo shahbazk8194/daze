@@ -28,23 +28,25 @@ YOUTUBEDL_OPTS = {
 class YoutubeDLUtility(object):
     def __init__(self, link, dest_dir):
         '''
-        Initialize utility class
+        Audio download/conversion
+
         @param link: link provided by user
         @param dest_dir: destination directory where downloaded audio files
-                         will be put
+                         will end up
         '''
         self.link = link
         self.dest_dir = dest_dir
         self._filename = ''
         self.dest_file = '{}/%(title)s.%(ext)s'.format(self.dest_dir)
         self.options = {'progress_hooks': [self.progress_hook],
-                        'outtmpl': self.output}
+                        'outtmpl': self.dest_file}
         self.options.update(YOUTUBEDL_OPTS)
+
         self.download_and_convert()
 
     def download_and_convert(self):
         '''
-        Download and convert audio from specified link
+        Download and convert audio from the given link
         '''
         with youtube_dl.YoutubeDL(self.options) as ydl:
             ydl.download([self.link])
@@ -53,6 +55,7 @@ class YoutubeDLUtility(object):
         '''
         Hooks that get called during download action to provide additional
         metadata
+
         @param audio_metadata: dictionary containing metadata about the audio
                                file
         '''
@@ -74,12 +77,14 @@ class YoutubeDLUtility(object):
     @property
     def name(self):
         '''
-        Return the name of the audio file parsing out the directory it's
-        nested in
+        Return the name of the audio file excluding extension
         '''
         return os.path.basename(os.path.splitext(self.filename)[0])
 
     @property
     def metadata(self):
+        '''
+        Return metadata about the audio file
+        '''
         return {'filename': self.filename}
 
