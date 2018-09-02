@@ -100,9 +100,7 @@ class PlaylistTab(QWidget):
 
         self.playlist = NonStandardQListView(self)
         self.playlist_item = QNonStandardItemModel()
-        # self.playlist.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.playlist.setDragEnabled(True)
-        # self.playlist.setDragDropMode(QAbstractItemView.InternalMove)
         self.playlist.setModel(self.playlist_item)
 
         # default directory path is the user's Downloads folder
