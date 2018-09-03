@@ -1,2 +1,2 @@
-# Daze
+# daze
 
