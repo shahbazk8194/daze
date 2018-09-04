@@ -4,6 +4,7 @@ Playlist tab functionality
 import os
 import re
 import shutil
+from mutagen.mp3 import MP3
 
 from .utils.youtube_dl import YoutubeDLUtility
 from .utils import daze_state
@@ -17,7 +18,9 @@ from PyQt5.QtWidgets import (QWidget,
                              QApplication,
                              QPushButton,
                              QFileDialog,
+                             QSlider,
                              QTextEdit,
+                             QStyle,
                              QAbstractItemView)
 from PyQt5.QtGui import (QStandardItem,
                          QStandardItemModel,
@@ -26,7 +29,9 @@ from PyQt5.QtGui import (QStandardItem,
 from PyQt5.QtCore import (pyqtSignal,
                           QModelIndex,
                           QVariant,
+                          QUrl,
                           Qt)
+from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer
 
 
 class QNonStandardItemModel(QStandardItemModel):
@@ -115,6 +120,19 @@ class PlaylistTab(QWidget):
         # button to allow users to change the directory path
         self.choose_directory = QPushButton("Choose Folder", self)
 
+        # button to play/pause audio
+        self.play_button = QPushButton(self)
+        self.play_button.setIcon(self.style().standardIcon(QStyle.SP_MediaPlay))
+        self.play_button.setEnabled(False)
+
+        # media player
+        self.media_player = QMediaPlayer(self)
+
+        # slider to control audio
+        self.audio_slider = QSlider(Qt.Horizontal, self)
+        self.audio_slider.setEnabled(False)
+        self.audio_slider.setFocusPolicy(Qt.NoFocus)
+
         # load daze data
         try:
             self.daze_data = daze_state.load_state()
@@ -163,6 +181,10 @@ class PlaylistTab(QWidget):
         self.playlist_item.itemBeforeAndAfterChanged.connect(self.callback)
 
         self.choose_directory.clicked.connect(self.open_directory)
+        self.play_button.clicked.connect(self.play_audio)
+        self.audio_slider.sliderMoved.connect(self.slider_value_changed)
+        self.media_player.stateChanged.connect(self.media_state_changed)
+        self.media_player.positionChanged.connect(self.position_changed)
 
         # get playlist item icon
         icon_path = os.path.join(os.path.dirname(__file__), 'icons', 'daze_icon.png')
@@ -170,13 +192,20 @@ class PlaylistTab(QWidget):
 
         # set layouts
         self.hbox = QHBoxLayout()
+        self.hbox2 = QHBoxLayout()
         self.vbox = QVBoxLayout()
         self.vbox.addWidget(self.playlist)
         self.hbox.addWidget(self.choose_directory)
         self.hbox.addWidget(self.directory_path_text)
+        self.hbox2.addWidget(self.play_button)
+        self.hbox2.addWidget(self.audio_slider)
+        self.vbox.addLayout(self.hbox2)
         self.vbox.addLayout(self.hbox)
 
         self.setLayout(self.vbox)
+
+    def slider_value_changed(self, value):
+        self.media_player.setPosition(value)
 
     def open_directory(self):
         '''
@@ -218,7 +247,40 @@ class PlaylistTab(QWidget):
         '''
         User clicks a playlist item
         '''
-        pass
+        self.play_button.setEnabled(True)
+        self.audio_slider.setEnabled(True)
+
+        item = self.playlist.currentIndex()
+        audio_filename = (self.daze_data.get('Playlist')
+                                        .get(item.data())
+                                        .get('filename'))
+        audio = MP3(audio_filename)
+        self.audio_slider.setRange(0, audio.info.length)
+        audio_file = QUrl.fromLocalFile(audio_filename)
+        audio_content = QMediaContent(audio_file)
+        self.media_player.setMedia(audio_content)
+
+    def play_audio(self):
+        '''
+        User clicks a play/pause button
+        '''
+        if self.media_player.state() == QMediaPlayer.PlayingState:
+            self.media_player.pause()
+        else:
+            self.media_player.play()
+
+    def media_state_changed(self, state):
+        '''
+        Change icon accordingly
+        '''
+        if self.media_player.state() == QMediaPlayer.PlayingState:
+            self.play_button.setIcon(self.style().standardIcon(QStyle.SP_MediaPause))
+        else:
+            self.play_button.setIcon(self.style().standardIcon(QStyle.SP_MediaPlay))
+
+    def position_changed(self, position):
+        position = position / 1000.0
+        self.audio_slider.setValue(position)
 
     def handle_remove(self):
         '''
@@ -263,6 +325,9 @@ class PlaylistTab(QWidget):
                                       .get(before_value)
                                       .get('filename').replace(before_value,
                                                                after_value))
+        os.rename((self.daze_data.get('Playlist')
+                                 .get(before_value)
+                                 .get('filename')), new_filename)
 
         del self.daze_data.get('Playlist')[before_value]
         self.daze_data.get('Playlist')[after_value] = {'filename': new_filename}
