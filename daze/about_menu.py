@@ -64,7 +64,7 @@ class AboutMenu(QDialog):
 
         info_msg = '''
             Daze is not responsible for illegal downloads of any content
-            that violate the terms and services agreement of any business.
+            that violate the terms and services agreement of any kind.
             '''
 
         copyright_msg = ('Copyright (c) {} Shahbaz Khan. All Rights '
