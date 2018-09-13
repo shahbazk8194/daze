@@ -42,8 +42,6 @@ class YoutubeDLUtility(object):
                         'outtmpl': self.dest_file}
         self.options.update(YOUTUBEDL_OPTS)
 
-        self.download_and_convert()
-
     def download_and_convert(self):
         '''
         Download and convert audio from the given link

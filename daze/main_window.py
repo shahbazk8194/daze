@@ -13,10 +13,7 @@ from PyQt5.QtWidgets import (QMainWindow,
                              QApplication,
                              QAction,
                              qApp,
-                             QTabWidget,
-                             QWidget,
-                             QDesktopWidget,
-                             QVBoxLayout)
+                             QDesktopWidget)
 
 
 class MainWindow(QMainWindow):
@@ -74,7 +71,7 @@ class MainWindow(QMainWindow):
         about_action.triggered.connect(self.about_dialog.exec)
 
         self.theme_action = QAction('Midnight Mode', self, checkable=True)
-        self.theme_action.setShortcut('Ctrl+P')
+        self.theme_action.setShortcut('Ctrl+M')
         self.theme_action.triggered.connect(self.toggle_theme)
 
         quit_action = QAction('Quit', self)
@@ -90,7 +87,7 @@ class MainWindow(QMainWindow):
         Initialize the main window
         '''
         self.setWindowTitle("Daze")
-        self.setGeometry(100, 100, 550, 500)
+        self.setGeometry(100, 100, 550, 300)
 
         # center window
         qt_rectangle = self.frameGeometry()
@@ -102,8 +99,8 @@ class MainWindow(QMainWindow):
         self.move(qt_rectangle.topLeft())
 
         # tabs
-        self.tab_widgets = TabWidgets(self)
-        self.setCentralWidget(self.tab_widgets)
+        playlist_widget = PlaylistTab(self.daze_data)
+        self.setCentralWidget(playlist_widget)
 
     def toggle_theme(self, state):
         '''
@@ -126,32 +123,6 @@ class MainWindow(QMainWindow):
         Exit the application
         '''
         qApp.quit()
-
-
-class TabWidgets(QWidget):
-    def __init__(self, parent):
-        '''
-        Initialize tabs
-
-        @param parent: MainWindow instance
-        '''
-        super().__init__(parent)
-        self.layout = QVBoxLayout(self)
-
-        # tabs setup
-        self.tabs = QTabWidget()
-        self.tabs.setMovable(True)
-
-        self.playlist_tab = PlaylistTab(parent.daze_data)
-        self.recommendation_tab = QWidget()
-        self.analytics_tab = QWidget()
-
-        self.tabs.addTab(self.playlist_tab, "Playlist")
-        self.tabs.addTab(self.recommendation_tab, "Recommendations")
-        self.tabs.addTab(self.analytics_tab, "Analytics")
-
-        self.layout.addWidget(self.tabs)
-        self.setLayout(self.layout)
 
 
 def main(args):
